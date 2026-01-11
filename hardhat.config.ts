@@ -1,9 +1,11 @@
 import hardhatToolboxMochaEthersPlugin from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 import hardhatEthersPlugin from "@nomicfoundation/hardhat-ethers";
+import hardhatViemPlugin from "@nomicfoundation/hardhat-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 
 export default defineConfig({
   plugins: [
+    hardhatViemPlugin,
     hardhatEthersPlugin,
     hardhatToolboxMochaEthersPlugin],
   solidity: {
