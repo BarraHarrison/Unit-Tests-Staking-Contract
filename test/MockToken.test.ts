@@ -1,19 +1,27 @@
 import { expect } from "chai";
 import hre from "hardhat";
-
-const ethers = (hre as any).ethers;
+import { ethers } from "ethers";
 
 describe("MockToken", function () {
     it("allows a user to receive minted tokens", async function () {
-        const [, user] = await ethers.getSigners();
+        const provider = new ethers.BrowserProvider(hre.network.provider);
+        const deployer = await provider.getSigner(0);
+        const user = await provider.getSigner(1);
 
-        const MockToken = await ethers.getContractFactory("MockToken");
-        const token = await MockToken.deploy("Mock Token", "MOCK");
+        const MockToken = await hre.artifacts.readArtifact("MockToken");
+        const factory = new ethers.ContractFactory(
+            MockToken.abi,
+            MockToken.bytecode,
+            deployer
+        );
+
+        const token = await factory.deploy("Mock Token", "MOCK");
+        await token.waitForDeployment();
 
         const mintAmount = ethers.parseEther("100");
-        await token.mint(user.address, mintAmount);
+        await token.mint(await user.getAddress(), mintAmount);
 
-        const balance = await token.balanceOf(user.address);
+        const balance = await token.balanceOf(await user.getAddress());
         expect(balance).to.equal(mintAmount);
     });
 });
