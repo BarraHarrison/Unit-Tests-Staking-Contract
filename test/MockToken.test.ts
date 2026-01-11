@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import hre from "hardhat";
 
+const viem = (hre as any).viem;
+
 describe("MockToken", function () {
     it("allows a user to receive minted tokens", async function () {
-        const { viem } = hre;
-
         const [deployer, user] = await viem.getWalletClients();
 
         const token = await viem.deployContract("MockToken", [
