@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 describe("MockToken", function () {
     it("allows a user to receive minted tokens", async function () {
         const provider = new ethers.BrowserProvider(
-            hre.network.provider as any
+            (hre.network as any).provider
         );
 
         const deployer = await provider.getSigner(0);
@@ -19,7 +19,11 @@ describe("MockToken", function () {
             deployer
         );
 
-        const token = await factory.deploy("Mock Token", "MOCK");
+        const token = (await factory.deploy(
+            "Mock Token",
+            "MOCK"
+        )) as any;
+
         await token.waitForDeployment();
 
         const mintAmount = ethers.parseEther("100");
