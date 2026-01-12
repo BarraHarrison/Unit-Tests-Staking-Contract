@@ -5,7 +5,9 @@ const viem = (hre as any).viem;
 
 describe("MockToken", function () {
     it("allows a user to receive minted tokens", async function () {
-        const [deployer, user] = await viem.getWalletClients();
+        const publicClient = await viem.getPublicClient();
+        const deployer = await viem.getWalletClient(0);
+        const user = await viem.getWalletClient(1);
 
         const token = await viem.deployContract("MockToken", [
             "Mock Token",
