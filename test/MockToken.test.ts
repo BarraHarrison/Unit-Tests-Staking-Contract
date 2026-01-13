@@ -143,4 +143,35 @@ describe("MockToken", function () {
         expect(balanceB).to.equal(mintB);
         expect(totalSupply).to.equal(mintA + mintB);
     });
+
+    it("reverts when minting to the zero address", async function () {
+        const provider = new ethers.JsonRpcProvider(
+            "http://127.0.0.1:8545"
+        );
+
+        const deployer = await provider.getSigner(0);
+
+        const artifact = await hre.artifacts.readArtifact("MockToken");
+
+        const factory = new ethers.ContractFactory(
+            artifact.abi,
+            artifact.bytecode,
+            deployer
+        );
+
+        const token = (await factory.deploy(
+            "Mock Token",
+            "MOCK"
+        )) as any;
+
+        await token.waitForDeployment();
+
+        const zeroAddress = ethers.ZeroAddress;
+        const mintAmount = ethers.parseEther("100");
+
+        await expect(
+            token.mint(zeroAddress, mintAmount)
+        ).to.be.reverted;
+    });
+
 });
