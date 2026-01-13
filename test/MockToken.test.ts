@@ -66,4 +66,43 @@ describe("MockToken", function () {
         const finalSupply = await token.totalSupply();
         expect(finalSupply).to.equal(mintAmount);
     });
+
+    it("accumulates totalSupply correctly across multiple mints", async function () {
+        const provider = new ethers.JsonRpcProvider(
+            "http://127.0.0.1:8545"
+        );
+
+        const deployer = await provider.getSigner(0);
+        const user = await provider.getSigner(1);
+
+        const artifact = await hre.artifacts.readArtifact("MockToken");
+
+        const factory = new ethers.ContractFactory(
+            artifact.abi,
+            artifact.bytecode,
+            deployer
+        );
+
+        const token = (await factory.deploy(
+            "Mock Token",
+            "MOCK"
+        )) as any;
+
+        await token.waitForDeployment();
+
+        const mintAmount1 = ethers.parseEther("100");
+        const mintAmount2 = ethers.parseEther("150");
+
+        await token.mint(await user.getAddress(), mintAmount1);
+        await token.mint(await user.getAddress(), mintAmount2);
+
+        const expectedTotal = mintAmount1 + mintAmount2;
+
+        const balance = await token.balanceOf(await user.getAddress());
+        const totalSupply = await token.totalSupply();
+
+        expect(balance).to.equal(expectedTotal);
+        expect(totalSupply).to.equal(expectedTotal);
+    });
+
 });
