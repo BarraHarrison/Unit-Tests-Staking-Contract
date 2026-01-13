@@ -4,7 +4,9 @@ import { ethers } from "ethers";
 
 describe("MockToken", function () {
     it("allows a user to receive minted tokens", async function () {
-        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545")
+        const provider = new ethers.BrowserProvider(
+            (hre.network as any).provider
+        );
 
         const deployer = await provider.getSigner(0);
         const user = await provider.getSigner(1);
