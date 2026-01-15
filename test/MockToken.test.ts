@@ -169,9 +169,14 @@ describe("MockToken", function () {
         const zeroAddress = ethers.ZeroAddress;
         const mintAmount = ethers.parseEther("100");
 
-        await expect(
-            token.mint(zeroAddress, mintAmount)
-        ).to.be.reverted;
-    });
+        let reverted = false;
 
+        try {
+            await token.mint(zeroAddress, mintAmount);
+        } catch (error) {
+            reverted = true;
+        }
+
+        expect(reverted).to.equal(true);
+    });
 });
