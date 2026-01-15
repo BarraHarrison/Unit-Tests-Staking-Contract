@@ -281,4 +281,64 @@ describe("MockToken", function () {
         expect(userBalance).to.equal(mintAmount - transferAmount);
         expect(spenderBalance).to.equal(transferAmount);
     });
+
+    it("reverts transferFrom when allowance is insufficient", async function () {
+        const provider = new ethers.JsonRpcProvider(
+            "http://127.0.0.1:8545"
+        );
+
+        const deployer = await provider.getSigner(0);
+        const user = await provider.getSigner(1);
+        const spender = await provider.getSigner(2);
+
+        const artifact = await hre.artifacts.readArtifact("MockToken");
+
+        const factory = new ethers.ContractFactory(
+            artifact.abi,
+            artifact.bytecode,
+            deployer
+        );
+
+        const token = (await factory.deploy(
+            "Mock Token",
+            "MOCK"
+        )) as any;
+
+        await token.waitForDeployment();
+
+        const mintAmount = ethers.parseEther("200");
+        await token.mint(await user.getAddress(), mintAmount);
+
+        const approvedAmount = ethers.parseEther("50");
+        await token
+            .connect(user)
+            .approve(await spender.getAddress(), approvedAmount);
+
+        const transferAmount = ethers.parseEther("100");
+
+        let reverted = false;
+
+        try {
+            await token
+                .connect(spender)
+                .transferFrom(
+                    await user.getAddress(),
+                    await spender.getAddress(),
+                    transferAmount
+                );
+        } catch (error) {
+            reverted = true;
+        }
+
+        expect(reverted).to.equal(true);
+
+        const userBalance = await token.balanceOf(await user.getAddress());
+        const spenderBalance = await token.balanceOf(
+            await spender.getAddress()
+        );
+
+        expect(userBalance).to.equal(mintAmount);
+        expect(spenderBalance).to.equal(0n);
+    });
+
 });
