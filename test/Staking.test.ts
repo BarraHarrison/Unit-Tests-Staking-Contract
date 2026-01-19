@@ -5,12 +5,7 @@ const ethers = (hre as any).ethers;
 
 describe("Staking", function () {
     it("allows a user to stake tokens", async function () {
-        const provider = new ethers.JsonRpcProvider(
-            "http://127.0.0.1:8545"
-        );
-
-        const deployer = await provider.getSigner(0);
-        const user = await provider.getSigner(1);
+        const [deployer, user] = await ethers.getSigners();
 
         const tokenArtifact = await hre.artifacts.readArtifact("MockToken");
         const tokenFactory = new ethers.ContractFactory(
