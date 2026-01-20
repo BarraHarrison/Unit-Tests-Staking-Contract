@@ -307,4 +307,74 @@ describe("Staking", function () {
         expect(userTokenBalance).to.equal(0n);
         expect(stakingContractBalance).to.equal(stakeAmount);
     });
+
+    it("reverts when a user tries to stake zero tokens", async function () {
+        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+
+        const deployer = await provider.getSigner(0);
+        const user = await provider.getSigner(1);
+
+        const tokenArtifact = await hre.artifacts.readArtifact("MockToken");
+        const tokenFactory = new ethers.ContractFactory(
+            tokenArtifact.abi,
+            tokenArtifact.bytecode,
+            deployer
+        );
+
+        const token = (await tokenFactory.deploy(
+            "Mock Token",
+            "MOCK"
+        )) as any;
+
+        await token.waitForDeployment();
+
+        const stakingArtifact = await hre.artifacts.readArtifact("Staking");
+        const stakingFactory = new ethers.ContractFactory(
+            stakingArtifact.abi,
+            stakingArtifact.bytecode,
+            deployer
+        );
+
+        const staking = (await stakingFactory.deploy(
+            await token.getAddress()
+        )) as any;
+
+        await staking.waitForDeployment();
+
+        const mintAmount = ethers.parseEther("100");
+        await token.mint(await user.getAddress(), mintAmount);
+
+        await token
+            .connect(user)
+            .approve(await staking.getAddress(), mintAmount);
+
+        let reverted = false;
+
+        try {
+            await staking.connect(user).stake(0);
+        } catch (error) {
+            reverted = true;
+        }
+
+        expect(reverted).to.equal(true);
+
+        const userStake = await staking.balances(
+            await user.getAddress()
+        );
+
+        const totalStaked = await staking.totalStaked();
+
+        const userTokenBalance = await token.balanceOf(
+            await user.getAddress()
+        );
+
+        const stakingContractBalance = await token.balanceOf(
+            await staking.getAddress()
+        );
+
+        expect(userStake).to.equal(0n);
+        expect(totalStaked).to.equal(0n);
+        expect(userTokenBalance).to.equal(mintAmount);
+        expect(stakingContractBalance).to.equal(0n);
+    });
 });
