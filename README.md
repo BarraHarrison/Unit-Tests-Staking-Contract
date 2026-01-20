@@ -1,57 +1,79 @@
-# Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
+# Unit Tests – Staking Contract
 
-This project showcases a Hardhat 3 Beta project using `mocha` for tests and the `ethers` library for Ethereum interactions.
+This repository contains a comprehensive unit test suite for an ERC-20 token and a staking contract, implemented using **Hardhat**, **Mocha**, and **Chai**.
+The focus of this project is correctness, safety, and audit-ready behavior, ensuring that all token mechanics and staking logic are thoroughly validated before being integrated into a production-level decentralized application.
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+This work represents the completion of **Week 11 – Testing & Auditing** in the blockchain study roadmap.
 
-## Project Overview
+---
 
-This example project includes:
+## MockToken Unit Tests
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using `mocha` and ethers.js
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+The `MockToken` contract is tested to ensure full compliance with ERC-20 standards and to guarantee correct behavior when used as the underlying asset in a staking protocol.
+The tests validate supply accounting, balance isolation, allowance mechanics, and critical failure conditions.
 
-## Usage
+1. **Minting assigns balances correctly**
+   Confirms that minted tokens are correctly credited to the intended recipient.
 
-### Running Tests
+2. **Minting increases total supply**
+   Ensures that `totalSupply` is accurately updated whenever new tokens are minted.
 
-To run all the tests in the project, execute the following command:
+3. **Multiple mints accumulate correctly**
+   Verifies that repeated mint operations accumulate supply rather than overwrite existing values.
 
-```shell
-npx hardhat test
-```
+4. **Balances remain isolated between users**
+   Ensures that minting tokens to one address does not affect the balances of other users.
 
-You can also selectively run the Solidity or `mocha` tests:
+5. **Minting to the zero address reverts**
+   Confirms that the contract safely rejects minting to the zero address to prevent token loss.
 
-```shell
-npx hardhat test solidity
-npx hardhat test mocha
-```
+6. **Approvals set allowances correctly**
+   Verifies that calling `approve` correctly sets the allowance for a specified spender.
 
-### Make a deployment to Sepolia
+7. **transferFrom reduces allowance correctly**
+   Ensures that delegated transfers correctly decrement the approved allowance.
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+8. **transferFrom reverts with insufficient allowance**
+   Confirms that delegated transfers fail when the spender’s allowance is insufficient.
 
-To run the deployment to a local chain:
+9. **approve overwrites existing allowances**
+   Verifies that calling `approve` again replaces the previous allowance rather than incrementing it, in accordance with ERC-20 semantics.
 
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
+---
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+## Staking Contract Unit Tests
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+The `Staking` contract is tested to validate correct staking behavior, accurate accounting, secure token custody, and essential safety guards.
+These tests ensure predictable behavior for both staking and unstaking operations under all supported conditions.
 
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+1. **Users can stake tokens**
+   Confirms that a user can successfully stake tokens after approving the staking contract.
 
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
+2. **Staking balances and totalStaked accumulate correctly**
+   Ensures that repeated staking operations correctly update per-user balances and the global `totalStaked` value.
 
-After setting the variable, you can run the deployment with the Sepolia network:
+3. **Staking transfers tokens to the contract**
+   Verifies that staking operations transfer ERC-20 tokens to the staking contract, preventing phantom staking.
 
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+4. **Unstaking returns tokens to the user**
+   Confirms that unstaking correctly returns tokens to the user and updates internal staking state.
+
+5. **Users cannot unstake more than they have staked**
+   Ensures the contract reverts when a user attempts to withdraw more tokens than they have deposited.
+
+6. **Users cannot stake zero tokens**
+   Confirms that zero-amount staking attempts are rejected to prevent invalid state transitions.
+
+7. **Users cannot unstake zero tokens**
+   Ensures that zero-amount unstaking attempts revert and do not affect contract state.
+
+---
+
+## Outcome
+
+* **16 passing unit tests**
+* Full validation of ERC-20 behavior required for staking
+* Full coverage of staking entry, exit, and safety conditions
+* Audit-ready foundation for reward logic and a full-stack decentralized application
+
+This repository serves as a stable and verified base for the **Week 12 full-stack dApp capstone project**, which will integrate smart contracts, a frontend interface, and backend services.
