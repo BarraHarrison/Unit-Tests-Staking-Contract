@@ -165,4 +165,72 @@ describe("Staking", function () {
         expect(userTokenBalance).to.equal(0n);
         expect(stakingContractBalance).to.equal(stakeAmount);
     });
+    it("returns tokens to the user when unstaking", async function () {
+        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+
+        const deployer = await provider.getSigner(0);
+        const user = await provider.getSigner(1);
+
+        const tokenArtifact = await hre.artifacts.readArtifact("MockToken");
+        const tokenFactory = new ethers.ContractFactory(
+            tokenArtifact.abi,
+            tokenArtifact.bytecode,
+            deployer
+        );
+
+        const token = (await tokenFactory.deploy(
+            "Mock Token",
+            "MOCK"
+        )) as any;
+
+        await token.waitForDeployment();
+
+        const stakingArtifact = await hre.artifacts.readArtifact("Staking");
+        const stakingFactory = new ethers.ContractFactory(
+            stakingArtifact.abi,
+            stakingArtifact.bytecode,
+            deployer
+        );
+
+        const staking = (await stakingFactory.deploy(
+            await token.getAddress()
+        )) as any;
+
+        await staking.waitForDeployment();
+
+        const stakeAmount = ethers.parseEther("300");
+        const unstakeAmount = ethers.parseEther("200");
+
+        await token.mint(await user.getAddress(), stakeAmount);
+
+        await token
+            .connect(user)
+            .approve(await staking.getAddress(), stakeAmount);
+
+        await staking.connect(user).stake(stakeAmount);
+
+        await staking.connect(user).unstake(unstakeAmount);
+
+        const remainingStake = await staking.balances(
+            await user.getAddress()
+        );
+
+        expect(remainingStake).to.equal(stakeAmount - unstakeAmount);
+
+        const totalStaked = await staking.totalStaked();
+        expect(totalStaked).to.equal(stakeAmount - unstakeAmount);
+
+        const userTokenBalance = await token.balanceOf(
+            await user.getAddress()
+        );
+
+        const stakingContractBalance = await token.balanceOf(
+            await staking.getAddress()
+        );
+
+        expect(userTokenBalance).to.equal(unstakeAmount);
+        expect(stakingContractBalance).to.equal(
+            stakeAmount - unstakeAmount
+        );
+    });
 });
